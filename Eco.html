@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EcoSort — Prototype Lengkap</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#22c55e;--muted:#94a3b8;--glass:rgba(255,255,255,0.04)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#061019,#0b1724);color:#e6eef8;min-height:100vh}
+    .hidden{display:none}
+    header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    nav{margin-left:auto;display:flex;gap:8px}
+    nav button{background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer}
+    nav button.active{border-color:var(--accent);color:var(--accent)}
+    main{display:flex;gap:18px;padding:20px}
+    .sidebar{width:260px;background:var(--card);padding:16px;border-radius:12px}
+    .content{flex:1;padding:16px;border-radius:12px}
+    .card{background:var(--glass);padding:14px;border-radius:10px;margin-bottom:12px}
+    .btn{background:var(--accent);border:none;border-radius:8px;padding:8px 12px;cursor:pointer;color:#04210f}
+    .small{font-size:13px;color:var(--muted)}
+    .points{font-size:26px;color:var(--accent);font-weight:700}
+    .preview{min-height:200px;border:1px dashed rgba(255,255,255,.2);display:grid;place-items:center;border-radius:8px}
+    select,input{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;color:white}
+
+    /* LOGIN */
+    #login-page{min-height:100vh;display:grid;place-items:center}
+    .login-card{background:var(--card);padding:28px;border-radius:14px;width:320px}
+    .login-card h2{text-align:center;margin-top:0}
+    .login-card input{width:100%;margin-bottom:10px}
+
+    @media(max-width:900px){main{flex-direction:column}.sidebar{width:100%}}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="login-card">
+    <h2>Login EcoSort</h2>
+    <input id="login-name" placeholder="Nama pengguna" />
+    <input id="login-email" placeholder="Email" />
+    <button class="btn" style="width:100%" onclick="login()">Masuk</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+<header>
+  <div style="font-weight:700">EcoSort</div>
+  <div class="small">Halo, <span id="user-name"></span></div>
+  <nav>
+    <button data-view="home" class="active">Beranda</button>
+    <button data-view="scan">Scan</button>
+    <button data-view="bank">Bank Sampah</button>
+    <button data-view="koperasi">Koperasi Desa</button>
+    <button data-view="reward">Reward</button>
+    <button onclick="logout()">Logout</button>
+  </nav>
+</header>
+
+<main>
+<aside class="sidebar">
+  <div class="card">
+    <div class="small">Poin Anda</div>
+    <div class="points" id="points">0</div>
+  </div>
+  <div class="card">
+    <div class="small">Bank Sampah Aktif</div>
+    <div id="active-bank">Belum dipilih</div>
+  </div>
+</aside>
+
+<section class="content">
+
+<!-- HOME -->
+<div id="view-home" class="view">
+  <div class="card">Selamat datang di EcoSort. Kelola sampah, kumpulkan poin, dan tukarkan di koperasi desa.</div>
+</div>
+
+<!-- SCAN -->
+<div id="view-scan" class="view hidden">
+  <div class="card">
+    <h3>Scan Sampah (Simulasi AI)</h3>
+    <div class="preview" id="preview">Preview Gambar</div><br>
+    <input type="file" id="file" accept="image/*"><br><br>
+    <button class="btn" onclick="scanAI()">Scan dengan AI</button>
+    <div id="scan-result" class="small"></div>
+  </div>
+</div>
+
+<!-- BANK SAMPAH -->
+<div id="view-bank" class="view hidden">
+  <div class="card">
+    <h3>Pilih Bank Sampah</h3>
+    <select id="bank-select">
+      <option value="">-- Pilih Bank Sampah --</option>
+      <option value="Bank Sampah Hijau|Jl. Mawar 12|1.2 km">Bank Sampah Hijau</option>
+      <option value="TPS3R Mandiri|Jl. Melati 5|2.4 km">TPS3R Mandiri</option>
+    </select>
+    <button class="btn" style="margin-left:6px" onclick="setBank()">Simpan</button>
+  </div>
+
+  <div class="card" id="bank-detail" class="small">Belum ada bank sampah dipilih</div>
+</div>
+
+<!-- KOPERASI -->
+<div id="view-koperasi" class="view hidden">
+  <div class="card">
+    <h3>Koperasi Bumi Desa</h3>
+    <p class="small">Mitra penukaran poin EcoSort</p>
+    <ul class="small">
+      <li>Voucher Belanja Desa</li>
+      <li>Pupuk Organik</li>
+      <li>Sembako</li>
+    </ul>
+  </div>
+</div>
+
+<!-- REWARD -->
+<div id="view-reward" class="view hidden">
+  <div class="card">
+    <h3>Penukaran Reward</h3>
+    <select id="reward-select">
+      <option value="">-- Pilih Reward --</option>
+      <option value="Voucher Koperasi|100">Voucher Koperasi Desa (100 pts)</option>
+      <option value="Pupuk Organik|150">Pupuk Organik (150 pts)</option>
+    </select>
+    <button class="btn" style="margin-left:6px" onclick="redeem()">Tukar</button>
+    <div id="redeem-msg" class="small"></div>
+  </div>
+</div>
+
+</section>
+</main>
+</div>
+
+<script>
+/* LOGIN */
+function login(){
+  const name=document.getElementById('login-name').value
+  if(!name){alert('Isi nama');return}
+  localStorage.setItem('ecosort_user',name)
+  init()
+}
+function logout(){localStorage.clear();location.reload()}
+
+function init(){
+  const u=localStorage.getItem('ecosort_user')
+  if(!u)return
+  document.getElementById('login-page').style.display='none'
+  document.getElementById('app').classList.remove('hidden')
+  document.getElementById('user-name').textContent=u
+  document.getElementById('points').textContent=localStorage.getItem('pts')||0
+  document.getElementById('active-bank').textContent=localStorage.getItem('bank')||'Belum dipilih'
+}
+
+/* NAV */
+document.querySelectorAll('nav button[data-view]').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'))
+    document.getElementById('view-'+b.dataset.view).classList.remove('hidden')
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'))
+    b.classList.add('active')
+  }
+})
+
+/* SCAN */
+file.onchange=e=>{
+  const img=document.createElement('img')
+  img.src=URL.createObjectURL(e.target.files[0])
+  img.style.maxWidth='100%'
+  preview.innerHTML=''
+  preview.appendChild(img)
+}
+function scanAI(){
+  const img=document.querySelector('#preview img')
+  if(!img){alert('Upload gambar terlebih dahulu');return}
+
+  // SIMULASI LOGIKA AI SEDERHANA
+  // Deteksi berbasis nama file (prototype akademik)
+  const fileName=document.getElementById('file').files[0].name.toLowerCase()
+  let type='Anorganik'
+  let tips='Pisahkan dan kirim ke bank sampah anorganik'
+
+  if(fileName.includes('organik') || fileName.includes('daun') || fileName.includes('sisa')){
+    type='Organik'
+    tips='Dapat diolah menjadi kompos atau pupuk organik'
+  }
+
+  document.getElementById('scan-result').innerHTML=`Hasil: Sampah <b>${type}</b> (+10 poin)`
+  document.getElementById('handling-tips').innerHTML=tips
+
+  const pts=Number(localStorage.getItem('pts')||0)+10
+  localStorage.setItem('pts',pts)
+  document.getElementById('points').textContent=pts
+}
+
+/* BANK */
+function setBank(){
+  const val=document.getElementById('bank-select').value
+  if(!val){alert('Pilih bank');return}
+  const [name,addr,dist]=val.split('|')
+  localStorage.setItem('bank',name)
+  document.getElementById('active-bank').textContent=name
+  document.getElementById('bank-detail').innerHTML=`<b>${name}</b><br>${addr}<br>Jarak: ${dist}`
+}
+
+/* REWARD */
+function redeem(){
+  const val=document.getElementById('reward-select').value
+  if(!val){alert('Pilih reward');return}
+  const [name,cost]=val.split('|')
+  let pts=Number(localStorage.getItem('pts')||0)
+  if(pts<cost){alert('Poin tidak cukup');return}
+  pts-=cost
+  localStorage.setItem('pts',pts)
+  document.getElementById('points').textContent=pts
+  document.getElementById('redeem-msg').textContent=`Berhasil menukar: ${name}`
+}
+
+init()
+</script>
+</body>
+</html>
